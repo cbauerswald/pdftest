@@ -3,10 +3,15 @@ const QRCode = require('qrcode')
 const uniqid = require('uniqid')
 fs = require('fs');
 let taxMapRed = '#e0002a'
-let taxMapRedLight = '#ff5454';
-let taxMapRedBackground = '#ff9191';
-let darkGray = "#444444";
+let taxMapRedLight = '#ff5454'
+let taxMapRedBackground = '#ff9191'
+let darkGray = "#444444"
 let lightGray = "#7a7a7a"
+let lightFont = 'Montserrat/static/Montserrat-Light.ttf'
+let baseFont = 'Montserrat/static/Montserrat-Medium.ttf'
+let boldFont = 'Montserrat/static/Montserrat-Bold.ttf'
+let baseItalic = 'Montserrat/static/Montserrat-MediumItalic.ttf'
+let semiBoldFont = "Montserrat/static/Montserrat-SemiBold.ttf"
 
 let doc = new PDFDocument()
 doc.pipe(fs.createWriteStream('output.pdf'));
@@ -24,27 +29,30 @@ const createInvoice = async () => {
         "paid": false,
         "amount": 620,
         "qrCode": "",
-        tax: 10,
         "products": [
             {
                 "Name": "Mathilda (ppbk)",
                 "Quantity": "124",
                 "Price": 5,
+                tax: 10,
             },
             {
                 "Name": "On Greener Days: A Love Story (ppbk)",
                 "Quantity": "14",
                 "Price": 75.15,
+                tax: 15,
             },
             {
                 "Name": "Friendly Skies",
                 "Quantity": "14",
                 "Price": 12.15,
+                tax: 7.5,
             },
             {
                 "Name": "When The Cows Come Home And Other Short Stories By Celebrated Author ",
                 "Quantity": "14",
                 "Price": 75.15,
+                tax: 10,
             }
         ],
         "shipping": {
@@ -78,8 +86,8 @@ let generatePdf = async () => {
             address2: 'New York, NY, 10025',
         }
     }
-    doc.font('Montserrat/static/Montserrat-Light.ttf')
     //create invoice pdf
+    doc.font(lightFont)
     generateHeader(doc, invoice, user)
     generateCustomerInformation(doc, invoice, user);
     generateInvoiceTable(doc, invoice)
@@ -96,59 +104,50 @@ function generateHeader(doc, invoice, user) {
         .moveDown(0.2)
         .fontSize(10)
         .fillColor(lightGray)
-        .font('Montserrat/static/Montserrat-Light.ttf')
+        .font(lightFont)
         .text(`no. `, { continued: true })
-        .font('Montserrat/static/Montserrat-Medium.ttf')
+        .font(baseFont)
         .text(`${invoice.invoiceId}`, { continued: true })
-        .font('Montserrat/static/Montserrat-Light.ttf')
+        .font(lightFont)
         .text(`   //   `, { continued: true })
-        .font('Montserrat/static/Montserrat-Medium.ttf')
+        .font(baseFont)
         .text(`${(new Date(invoice.dateCreated)).toLocaleDateString("en-US")}`,)
         .fillColor(lightGray)
         .moveDown(2)
-        .font("Montserrat/static/Montserrat-Medium.ttf")
-        .text("billing from:   ",)
+        .font(baseFont)
+        .text("billing from:",)
         .fontSize(10)
-        .font("Montserrat/static/Montserrat-Light.ttf")
+        .font(lightFont)
         .text(user.address.address1, { continued: true })
-        .text("  ", { continued: true })
+        .text(",  ", { continued: true })
         .text(user.address.address2)
         .image(invoice.qrCode, doc.page.width - marginLeft - 80, 50 + 5, { width: 80 })
-
-
         .fontSize(10)
         .moveDown();
 }
 
 function generateCustomerInformation(doc, invoice, user) {
-    doc.font('Montserrat/static/Montserrat-Light.ttf')
-    doc
+    doc.font(lightFont)
         .fillColor(taxMapRed)
         .fontSize(20)
         .text(user.name.toUpperCase(), marginLeft, 180);
 
-    generateHr(doc, 205);
+    generateHr(doc, 180 + tableYMargin + doc.currentLineHeight());
 
-    const customerInformationTop = 220;
+    const customerInformationTop = 180 + 2 * tableYMargin + doc.currentLineHeight();
 
     doc
         .fillColor(darkGray)
         .fontSize(10)
-        // .font("Montserrat/static/Montserrat-Medium.ttf")
-        // .text("Invoice Number:", marginLeft, customerInformationTop)
-        // .font("Montserrat/static/Montserrat-Light.ttf")
-        // .text(invoice.invoiceId, 150, customerInformationTop)
-        // .text("Invoice Created:", marginLeft, customerInformationTop + 15)
-        // .text((new Date(invoice.dateCreated)).toLocaleDateString("en-US"), 150, customerInformationTop + 15)
-        .font("Montserrat/static/Montserrat-Medium.ttf")
+        .font(baseFont)
         .text("due", marginLeft, customerInformationTop)
-        .font("Montserrat/static/Montserrat-Light.ttf")
+        .font(lightFont)
         .text((new Date(invoice.dateDue)).toLocaleDateString("en-US"), 150, customerInformationTop)
-        .font("Montserrat/static/Montserrat-Medium.ttf")
+        .font(baseFont)
         .text("balance", marginLeft, customerInformationTop + 35)
         .fontSize(20)
         .fillColor(darkGray)
-        .font('Montserrat/static/Montserrat-Medium.ttf')
+        .font(baseFont)
         .text(
             formatCurrency(getTotal(invoice)),
             150,
@@ -156,9 +155,9 @@ function generateCustomerInformation(doc, invoice, user) {
         )
         .fillColor(darkGray)
         .fontSize(10)
-        .font("Montserrat/static/Montserrat-Medium.ttf")
+        .font(baseFont)
         .text('shipping to:', 300, customerInformationTop)
-        .font("Montserrat/static/Montserrat-Light.ttf")
+        .font(lightFont)
         .text(invoice.shipping.name, 300, customerInformationTop + 15)
         .text(invoice.shipping.street, 300, customerInformationTop + 30)
         .text(
@@ -171,8 +170,6 @@ function generateCustomerInformation(doc, invoice, user) {
             customerInformationTop + 45
         )
         .moveDown();
-
-    // generateHr(doc, 267);
 }
 
 function generateFooter(doc) {
@@ -180,11 +177,11 @@ function generateFooter(doc) {
     doc
         .fill(taxMapRedLight)
         .fontSize(12)
-        .font('Montserrat/static/Montserrat-Medium.ttf')
+        .font(baseFont)
         .text("Thank you for your business!",
             { width: 500, align: "Left" }
         )
-        .font('Montserrat/static/Montserrat-Light.ttf')
+        .font(lightFont)
         .fill(darkGray)
         .moveDown()
         .fontSize(10)
@@ -192,14 +189,29 @@ function generateFooter(doc) {
             "Payment is due within 15 days.")
         .text("Invoice generated by ", { continued: true })
         .fill(taxMapRed)
-        .font('Montserrat/static/Montserrat-Light.ttf')
+        .font(lightFont)
         .text('tax', { continued: true })
-        .font('Montserrat/static/Montserrat-Bold.ttf')
+        .font(boldFont)
         .text('map')
 
 }
 
-let getTotal = (invoice) => (invoice.amount + invoice.amount * invoice.tax / 100);
+let getTotal = (invoice) => {
+    let total = 0
+    invoice.products.forEach(p => total += getProductTotal(p))
+    return total
+}
+
+let getProductTotal = (product) => {
+    return product.Price * product.Quantity * (1 + product.tax / 100);
+}
+
+let getTotalTax = (invoice) => {
+    let totalTax = 0
+    invoice.products.forEach(p => totalTax += p.Price * p.Quantity * p.tax / 100)
+    return totalTax
+}
+
 
 
 function generateInvoiceTable(doc, invoice) {
@@ -207,12 +219,12 @@ function generateInvoiceTable(doc, invoice) {
     const invoiceTableTop = 330;
     let yposition = invoiceTableTop;
 
-    doc.font("Montserrat/static/Montserrat-Light.ttf");
+    doc.font(lightFont);
     yposition = generateTableHeader(
         doc,
         yposition,
     );
-    doc.font("Montserrat/static/Montserrat-Light.ttf");
+    doc.font(lightFont);
 
 
     for (i = 0; i < invoice.products.length; i++) {
@@ -222,11 +234,7 @@ function generateInvoiceTable(doc, invoice) {
             doc,
             yposition,
             i,
-            item.Name,
-            item.Price,
-            item.Quantity,
-            formatCurrency(item.Price * item.Quantity),
-            i
+            item
         );
         // generateHr(doc, position + 20);
     }
@@ -234,12 +242,12 @@ function generateInvoiceTable(doc, invoice) {
     // yposition = yposition + 20;
     yposition = generateBaseTableRow(doc, yposition, "subtotal", formatCurrency(invoice.amount))
 
-    yposition = generateBaseTableRow(doc, yposition, `tax (${invoice.tax}%)`, `${formatCurrency(invoice.tax / 100 * invoice.amount)}`)
+    yposition = generateBaseTableRow(doc, yposition, `tax`, `${formatCurrency(getTotalTax(invoice))}`)
 
     // yposition = yposition + 20;
-    doc.font("Montserrat/static/Montserrat-SemiBold.ttf");
+    doc.font(semiBoldFont);
     yposition = generateBaseTableRow(doc, yposition, "balance due", `${formatCurrency(getTotal(invoice))}`)
-    doc.font("Montserrat/static/Montserrat-Light.ttf");
+    doc.font(lightFont);
     doc.x = marginLeft;
 }
 
@@ -247,26 +255,28 @@ function generateTableRow(
     doc,
     y,
     index,
-    item,
-    unitCost,
-    quantity,
-    lineTotal
+    product
+    // item,
+    // unitCost,
+    // quantity,
+    // lineTotal
 ) {
     let yPosition = y + tableYMargin;
     let widthOfItemCell = 205;
-    let numLines = Math.ceil((doc.widthOfString(item) / widthOfItemCell) + 0.5); // 0.5 is added buffer for long words needing extra lines
+    let numLines = Math.ceil((doc.widthOfString(product.Name) / widthOfItemCell) + 0.5); // 0.5 is added buffer for long words needing extra lines
     const itemLineHeight = numLines * doc.currentLineHeight()
     let midCellY = yPosition + itemLineHeight / 2 - doc.currentLineHeight() / 2
     console.log(itemLineHeight)
     doc
         .fontSize(6)
         .text(index >= 0 ? `${index + 1}.` : "", marginLeft + 5, midCellY)
-        .font('Montserrat/static/Montserrat-MediumItalic.ttf')
-        .text(item.toUpperCase(), marginLeft + 50, yPosition, { width: widthOfItemCell })
-        .font('Montserrat/static/Montserrat-Light.ttf')
-        .text(unitCost ? formatCurrency(unitCost) : "", 320, midCellY, { width: 90, align: "left" })
-        .text(quantity, 370, midCellY, { width: 90, align: "center" })
-        .text(lineTotal, 490, midCellY, { width: 90, align: "left" });
+        .font(baseItalic)
+        .text(product.Name.toUpperCase(), marginLeft + 50, yPosition, { width: widthOfItemCell })
+        .font(lightFont)
+        .text(product.Price ? formatCurrency(product.Price) : "", 320, midCellY, { width: 57, align: "left" })
+        .text(product.tax ? `${product.tax}%` : "", 377, midCellY, { width: 57, align: "left" })
+        .text(product.Quantity, 434, midCellY, { width: 57, align: "left" })
+        .text(formatCurrency(getProductTotal(product)), 490, midCellY, { width: 90, align: "left" });
     bottomY = yPosition + tableYMargin + itemLineHeight;
     // generateHr(doc, bottomY, { width: 0.5 });
     if (index % 2 == 1) {
@@ -305,11 +315,15 @@ function generateTableHeader(
     position = y + tableYMargin;
     doc
         .fontSize(10)
-        .text("NO.", marginLeft, position)
+    let lineHeight = doc.currentLineHeight();
+    doc.text("NO.", marginLeft, position)
         .text("ITEM", marginLeft + 50, position)
-        .text("UNIT COST", 320, position, { width: 90, align: "left" })
-        .text("QTY", 370, position, { width: 90, align: "center" })
-        .text("TOTAL", 490, position, { align: "left" });
+        .text("PRICE", 320, position, { width: 57, align: "left" })
+        .text("TAX", 377, position, { width: 57, align: "left" })
+        .text("QTY", 434, position, { width: 57, align: "left" })
+        .text("TOTAL", 490, position, { align: "left" })
+        .fontSize(6)
+        .text("tax included", 490, position + lineHeight, { align: "left" });
 
     generateHr(doc, position + tableYMargin + 10)
     return position + tableYMargin + 10;
